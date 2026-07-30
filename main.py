@@ -97,7 +97,7 @@ def dodge(values: list[float], gap: float = 0.5, step: float = 0.16) -> list[flo
 def plot_institutes(df: pd.DataFrame, out_path: str) -> None:
     cutoff = df.index.max() - pd.Timedelta(days=90)
     latest = df[df.index >= cutoff].reset_index().groupby("institute").last()
-    latest = latest.sort_values("FdI")
+    latest = latest.sort_values("date")
 
     avg = latest_averages(df)
     rows = [(f"{inst}  ({row['date']:%d/%m})", row) for inst, row in latest.iterrows()]
@@ -155,7 +155,7 @@ def plot_institutes(df: pd.DataFrame, out_path: str) -> None:
     fig.text(
         0.03, 0.905,
         f"Ultimo sondaggio degli ultimi 90 giorni per istituto (al {df.index.max():%d/%m/%Y}), "
-        "ordinato per valore FdI · Media = media mobile 21 giorni di tutti gli istituti",
+        "ordinato per data del sondaggio · Media = media mobile 21 giorni di tutti gli istituti",
         fontsize=10, color=MUTED, va="top",
     )
     fig.text(

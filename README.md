@@ -12,7 +12,7 @@ A second chart zooms in on just the last 12 months:
 ![Polls from the last 12 months](italian_polls_recent.png)
 
 A third chart compares institutes ("house effects"): each row is an
-institute's most recent poll from the past 90 days, sorted by FdI share, with
+institute's most recent poll from the past 90 days, sorted by poll date, with
 the all-institute rolling average on top for reference:
 
 ![Poll results by institute](italian_polls_institutes.png)
