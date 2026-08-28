@@ -34,7 +34,7 @@ uv run main.py --csv path/to/polls.csv --out chart.png --out-recent recent.png -
 
 ## Data
 
-`italian_polls.csv` contains 1,058 polls with one row per poll, scraped from
+`italian_polls.csv` contains 1,080 polls with one row per poll, scraped from
 [Wikipedia's "Opinion polling for the next Italian general election"](https://en.wikipedia.org/wiki/Opinion_polling_for_the_next_Italian_general_election):
 
 | Column | Description |
@@ -44,14 +44,23 @@ uv run main.py --csv path/to/polls.csv --out chart.png --out-recent recent.png -
 | `survey_start` / `survey_end` | Fieldwork period |
 | `sample_size` | Respondents (where reported) |
 | `FdI`, `PD`, `M5S`, `Lega`, `FI`, `AVS`, `+E`, `NM` | Party vote shares in percent |
+| `FN` | Futuro Nazionale (Vannacci). The party was founded in February 2026, so the column is empty for every earlier poll — Wikipedia's table carries a `Did not exist` cell there, not a blank |
 | `Az-IV` | Azione + Italia Viva combined (reported jointly for parts of the period, so tracked as one series) |
-| `Others` | All remaining minor lists (Italexit, DSP, PLD, UP, SUE, …), which vary a lot over time as pollsters add or drop niche lists from their questionnaires — expect this series to be noisy |
+| `Others` | Wikipedia's own residual `Others` cell **plus** every minor-party column this CSV does not break out separately (DSP, PLD, Italexit, PTD, UP, SUE, ISP, ScN, AP, Libertà, …). Wikipedia's residual itself covers Ora!, South calls North, Power to the People!, Communist Refoundation, Avanti–PSI, Union of the Centre and similar. Which lists appear varies a lot over time as pollsters add or drop niche lists — expect this series to be noisy |
 
 Wikipedia's source tables occasionally report a single combined value for two
 adjacent minor-party columns via a spanning cell (e.g. a joint Azione/Italia
 Viva figure). The scrape parses the raw HTML `colspan` rather than
 `pandas.read_html`'s column output, since the latter duplicates a spanned
 cell's value into each column and would double-count it when summed.
+
+Spanning cells run the other way too. A party that did not yet exist gets one
+`rowspan` cell covering every poll before its founding, so those rows carry
+*fewer* `<td>`s than the header has columns and a positional parser silently
+shifts everything to its right by one — which is how fourteen January 2026 rows
+came to hold their `Lead` value inside `Others` (fixed 2026-08-28). Expand both
+`colspan` **and** `rowspan` into a full grid before mapping cells to columns,
+and check that each row's shares still sum to roughly 100.
 
 ## Chart design
 
@@ -63,4 +72,6 @@ cell's value into each column and would double-count it when summed.
   electoral threshold.
 - Colors follow each party's conventional brand color, adjusted for contrast
   and colorblind separation. Every line is directly labeled with its latest
-  average, so no series is identified by color alone.
+  average, so no series is identified by color alone. `FN` is the exception:
+  its brand navy is indistinguishable from FdI's, so it carries a swept
+  substitute instead (see the note above `PARTIES` in `main.py`).

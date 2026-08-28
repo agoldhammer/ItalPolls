@@ -16,10 +16,21 @@ import pandas as pd
 # Conventional party colors, adjusted for contrast on a light surface and
 # color-vision-deficiency separation (M5S yellow darkened; FdI navy vs. FI
 # azure kept far apart in hue). Order = label order by recent support.
+#
+# FN is the one slot that does not use its party's own color: Futuro Nazionale
+# brands as near-black navy (#20293D), which is indistinguishable from FdI here
+# (OKLab dE 5.3 normal-vision, well under the 15 floor). The substitute was
+# swept in OKLCH against the ten committed colors with the dataviz skill's
+# validate_palette.js: worst-case CVD dE 12.4 (vs AVS), normal-vision dE 18.2
+# (vs FI), contrast 5.64:1 on this surface. The all-pairs run still FAILs on
+# pre-existing pairs (FdI off lightness band and low chroma, Others gray,
+# M5S/NM dE 0.8 protan) — identical with and without FN, and none of them
+# involve this slot.
 PARTIES = {
     "FdI": "#0B2E59",
     "PD": "#E4032E",
     "M5S": "#D4A017",
+    "FN": "#324DFE",
     "FI": "#1E90CE",
     "AVS": "#8E44AD",
     "Lega": "#1D7A46",
