@@ -8,6 +8,7 @@ Usage: uv run main.py [--csv PATH] [--out PATH]
 """
 
 import argparse
+import textwrap
 
 import matplotlib.dates as mdates
 import matplotlib.pyplot as plt
@@ -60,6 +61,9 @@ SCENARIO_NOTES = {
 
 INK = "#33302e"
 MUTED = "#77716c"
+# Secondary text on the institutes chart, which readers view scaled down to
+# screen width: dark enough to read there, still a step lighter than INK.
+MUTED_DARK = "#4f4a46"
 SURFACE = "#fcfcfb"
 ROLLING_WINDOW = "21D"
 THRESHOLD = 3  # national single-list electoral threshold
@@ -75,16 +79,24 @@ def base_institute(institutes: pd.Series) -> pd.Series:
     return institutes.str.replace(r"-\d+$", "", regex=True)
 
 
-def add_footer(fig: plt.Figure, institutes: pd.Series, x: float, y: float, line: float) -> float:
+def add_footer(
+    fig: plt.Figure, institutes: pd.Series, x: float, y: float, line: float,
+    fontsize: float = 8.5, color: str = MUTED, wrap: int | None = None,
+) -> float:
     """Draw scenario footnotes and the source line; return the height they take."""
     present = set(institutes)
     notes = [note for tags, note in SCENARIO_NOTES.items() if tags & present]
+    if wrap:
+        notes = [
+            line for note in notes
+            for line in textwrap.wrap(note, wrap, subsequent_indent="  ")
+        ]
     for i, note in enumerate(notes):
-        fig.text(x, y + (len(notes) - i) * line, f"* {note}", fontsize=8.5, color=MUTED)
+        fig.text(x, y + (len(notes) - i) * line, f"{'' if note.startswith(' ') else '* '}{note}", fontsize=fontsize, color=color)
     fig.text(
         0.99, y,
         "Fonte: italian_polls.csv (SWG, Tecnè, Termometro Politico, EMG, Ipsos, ecc.)",
-        ha="right", fontsize=8.5, color=MUTED,
+        ha="right", fontsize=fontsize, color=color,
     )
     return len(notes) * line
 
@@ -165,49 +177,52 @@ def plot_institutes(df: pd.DataFrame, out_path: str) -> None:
 
     ax.axvline(THRESHOLD, color=MUTED, linewidth=0.8, linestyle=(0, (1, 3)), alpha=0.8, zorder=1)
     ax.annotate(
-        f"Soglia {THRESHOLD}%", (THRESHOLD, -0.5), ha="center", va="bottom", fontsize=8.5, color=MUTED,
+        f"Soglia {THRESHOLD}%", (THRESHOLD, -0.5), ha="center", va="bottom", fontsize=12, color=MUTED_DARK,
     )
     ax.axhline(len(rows) - 1.5, color="#d5d1cd", linewidth=0.8)
 
     handles = [
-        plt.Line2D([], [], marker="o", linestyle="", markersize=9,
+        plt.Line2D([], [], marker="o", linestyle="", markersize=11,
                    markerfacecolor=color, markeredgecolor=SURFACE, label=PARTY_LABELS.get(party, party))
         for party, color in PARTIES.items()
     ]
     ax.legend(
         handles=handles, loc="lower center", bbox_to_anchor=(0.5, 1.0),
-        ncol=len(PARTIES), frameon=False, fontsize=9.5, labelcolor=INK,
+        ncol=len(PARTIES), frameon=False, fontsize=13, labelcolor=INK,
         handletextpad=0.1, columnspacing=0.9, borderaxespad=0.2,
     )
 
     ax.set_xlim(0, xmax + 2)
     ax.set_ylim(-0.6, len(rows) - 0.4)
-    ax.set_yticks(range(len(rows)), [label for label, _ in rows], fontsize=10)
+    ax.set_yticks(range(len(rows)), [label for label, _ in rows], fontsize=14)
     ax.xaxis.set_major_formatter(lambda v, _: f"{v:.0f}%")
     ax.grid(axis="x", color="#e6e3e0", linewidth=0.7)
     ax.set_axisbelow(True)
     for spine in ("top", "right", "left"):
         ax.spines[spine].set_visible(False)
     ax.spines["bottom"].set_color("#d5d1cd")
-    ax.tick_params(colors=MUTED, length=0)
+    ax.tick_params(colors=MUTED_DARK, length=0, labelsize=14)
     for tick in ax.get_yticklabels():
         tick.set_color(INK)
     ax.get_yticklabels()[-1].set_fontweight("bold")
 
     fig.text(
         0.03, 0.955, "Sondaggi recenti per istituto",
-        fontsize=16, color=INK, fontweight="bold", va="top",
+        fontsize=22, color=INK, fontweight="bold", va="top",
     )
     fig.text(
         0.03, 0.905,
         f"Ultimo sondaggio degli ultimi 90 giorni per istituto (al {df.index.max():%d/%m/%Y}), "
-        "ordinato per data del sondaggio · Media = media mobile 21 giorni di tutti gli istituti",
-        fontsize=10, color=MUTED, va="top",
+        "ordinato per data del sondaggio\nMedia = media mobile 21 giorni di tutti gli istituti",
+        fontsize=13, color=MUTED_DARK, va="top", linespacing=1.5,
     )
     height = fig.get_figheight()
-    extra = add_footer(fig, latest.index.to_series(), 0.03, 0.02, 0.22 / height)
+    extra = add_footer(
+        fig, latest.index.to_series(), 0.03, 0.02, 0.3 / height, fontsize=12, color=MUTED_DARK,
+        wrap=150,
+    )
 
-    fig.subplots_adjust(left=0.19, right=0.97, top=0.79, bottom=0.10 + extra)
+    fig.subplots_adjust(left=0.23, right=0.97, top=0.84, bottom=0.08 + extra)
     fig.savefig(out_path, facecolor=SURFACE)
     print(f"Wrote {out_path}")
 
