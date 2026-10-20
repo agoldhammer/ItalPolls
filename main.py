@@ -47,6 +47,17 @@ ELECTIONS = {
     "2024-06-09": "Elezioni europee 2024",
 }
 
+# A poll published as several scenarios on the same fieldwork is kept as one
+# row per scenario, tagged <Institute>-1, -2, ...; each tag set carries a
+# footnote under every chart whose data includes it.
+SCENARIO_NOTES = {
+    frozenset({"SWG-1", "SWG-2"}): (
+        "SWG-1 / SWG-2: due scenari dello stesso sondaggio SWG (14–19/10/2026) · "
+        "SWG-1 con Schlein leader del centrosinistra (CSX, la coalizione di PD e M5S), "
+        "SWG-2 con Conte leader"
+    ),
+}
+
 INK = "#33302e"
 MUTED = "#77716c"
 SURFACE = "#fcfcfb"
@@ -57,6 +68,25 @@ THRESHOLD = 3  # national single-list electoral threshold
 def load_polls(csv_path: str) -> pd.DataFrame:
     df = pd.read_csv(csv_path, parse_dates=["date"])
     return df.sort_values("date").set_index("date")
+
+
+def base_institute(institutes: pd.Series) -> pd.Series:
+    """Institute names with any scenario tag (SWG-1 -> SWG) removed."""
+    return institutes.str.replace(r"-\d+$", "", regex=True)
+
+
+def add_footer(fig: plt.Figure, institutes: pd.Series, x: float, y: float, line: float) -> float:
+    """Draw scenario footnotes and the source line; return the height they take."""
+    present = set(institutes)
+    notes = [note for tags, note in SCENARIO_NOTES.items() if tags & present]
+    for i, note in enumerate(notes):
+        fig.text(x, y + (len(notes) - i) * line, f"* {note}", fontsize=8.5, color=MUTED)
+    fig.text(
+        0.99, y,
+        "Fonte: italian_polls.csv (SWG, Tecnè, Termometro Politico, EMG, Ipsos, ecc.)",
+        ha="right", fontsize=8.5, color=MUTED,
+    )
+    return len(notes) * line
 
 
 def spread_labels(positions: list[float], min_gap: float, lo: float, hi: float) -> list[float]:
@@ -107,8 +137,13 @@ def dodge(values: list[float], gap: float = 0.5, step: float = 0.16) -> list[flo
 
 def plot_institutes(df: pd.DataFrame, out_path: str) -> None:
     cutoff = df.index.max() - pd.Timedelta(days=90)
-    latest = df[df.index >= cutoff].reset_index().groupby("institute").last()
-    latest = latest.sort_values("date")
+    recent = df[df.index >= cutoff].reset_index()
+    # Every poll on each institute's latest date, so the scenarios of a
+    # tagged poll (SWG-1, SWG-2) each get a row and an older untagged poll
+    # by the same institute does not linger as a stale one.
+    base = base_institute(recent["institute"])
+    latest = recent[recent["date"] == recent.groupby(base)["date"].transform("max")]
+    latest = latest.sort_values(["date", "institute"]).set_index("institute")
 
     avg = latest_averages(df)
     rows = [(f"{inst}  ({row['date']:%d/%m})", row) for inst, row in latest.iterrows()]
@@ -169,13 +204,10 @@ def plot_institutes(df: pd.DataFrame, out_path: str) -> None:
         "ordinato per data del sondaggio · Media = media mobile 21 giorni di tutti gli istituti",
         fontsize=10, color=MUTED, va="top",
     )
-    fig.text(
-        0.99, 0.02,
-        "Fonte: italian_polls.csv (SWG, Tecnè, Termometro Politico, EMG, Ipsos, ecc.)",
-        ha="right", fontsize=8.5, color=MUTED,
-    )
+    height = fig.get_figheight()
+    extra = add_footer(fig, latest.index.to_series(), 0.03, 0.02, 0.22 / height)
 
-    fig.subplots_adjust(left=0.19, right=0.97, top=0.79, bottom=0.10)
+    fig.subplots_adjust(left=0.19, right=0.97, top=0.79, bottom=0.10 + extra)
     fig.savefig(out_path, facecolor=SURFACE)
     print(f"Wrote {out_path}")
 
@@ -259,13 +291,9 @@ def plot(df: pd.DataFrame, out_path: str, title: str) -> None:
         f"Punti: singoli sondaggi · Linee: media mobile 21 giorni",
         transform=ax.transAxes, fontsize=10.5, color=MUTED,
     )
-    fig.text(
-        0.99, 0.01,
-        "Fonte: italian_polls.csv (SWG, Tecnè, Termometro Politico, EMG, Ipsos, ecc.)",
-        ha="right", fontsize=8.5, color=MUTED,
-    )
+    extra = add_footer(fig, df["institute"], 0.045, 0.01, 0.22 / fig.get_figheight())
 
-    fig.subplots_adjust(left=0.045, right=0.885, top=0.895, bottom=0.07)
+    fig.subplots_adjust(left=0.045, right=0.885, top=0.895, bottom=0.07 + extra)
     fig.savefig(out_path, facecolor=SURFACE)
     print(f"Wrote {out_path}")
 
