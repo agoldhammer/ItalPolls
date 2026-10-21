@@ -57,6 +57,11 @@ SCENARIO_NOTES = {
         "SWG-1 con Schlein leader del centrosinistra (CSX, la coalizione di PD e M5S), "
         "SWG-2 con Conte leader"
     ),
+    frozenset({"Piepoli-1", "Piepoli-2"}): (
+        "Piepoli-1 / Piepoli-2: due scenari dello stesso sondaggio Piepoli (28/9/2026) · "
+        "Piepoli-1 con Schlein leader del centrosinistra (CSX, la coalizione di PD e M5S), "
+        "Piepoli-2 con Conte leader"
+    ),
 }
 
 INK = "#33302e"
