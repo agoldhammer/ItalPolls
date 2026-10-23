@@ -62,6 +62,11 @@ SCENARIO_NOTES = {
         "Piepoli-1 con Schlein leader del centrosinistra (CSX, la coalizione di PD e M5S), "
         "Piepoli-2 con Conte leader"
     ),
+    frozenset({"Noto-1", "Noto-2"}): (
+        "Noto-1 / Noto-2: due scenari dello stesso sondaggio Noto (20/10/2026) · "
+        "Noto-1 con Schlein leader del centrosinistra (CSX, la coalizione di PD e M5S), "
+        "Noto-2 con Conte leader"
+    ),
 }
 
 INK = "#33302e"
