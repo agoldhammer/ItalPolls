@@ -72,6 +72,11 @@ SCENARIO_NOTES = {
         "Only Numbers-1 con Schlein leader del centrosinistra (CSX, la coalizione di PD e M5S), "
         "Only Numbers-2 con Conte leader"
     ),
+    frozenset({"Noto-3", "Noto-4"}): (
+        "Noto-3 / Noto-4: due scenari dello stesso sondaggio Noto (5/11/2026) · "
+        "Noto-3 con Schlein leader del centrosinistra (CSX, la coalizione di PD e M5S), "
+        "Noto-4 con Conte leader"
+    ),
 }
 
 INK = "#33302e"
