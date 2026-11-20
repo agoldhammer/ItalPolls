@@ -77,6 +77,11 @@ SCENARIO_NOTES = {
         "Noto-3 con Schlein leader del centrosinistra (CSX, la coalizione di PD e M5S), "
         "Noto-4 con Conte leader"
     ),
+    frozenset({"Noto-5", "Noto-6"}): (
+        "Noto-5 / Noto-6: due scenari dello stesso sondaggio Noto (19/11/2026) · "
+        "Noto-5 con Schlein leader del centrosinistra (CSX, la coalizione di PD e M5S), "
+        "Noto-6 con Conte leader"
+    ),
     frozenset({"Ixè-1", "Ixè-2"}): (
         "Ixè-1 / Ixè-2: due scenari dello stesso sondaggio Ixè (2–9/11/2026) · "
         "Ixè-1 con Schlein leader del centrosinistra (CSX, la coalizione di PD e M5S), "
